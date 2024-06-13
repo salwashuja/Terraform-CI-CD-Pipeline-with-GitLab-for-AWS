@@ -42,8 +42,6 @@ apply:
 
 destroy:
     stage: destroy
-    dependencies: 
-        - destroy
     script: 
         - terraform destroy --auto-approve
 
