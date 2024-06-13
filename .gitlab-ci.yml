@@ -5,8 +5,8 @@ image:
         - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
 variables:
     
-  AWS_ACCESS_KEY_ID: $(MY_AWS_ACCESS_KEY)
-  AWS_SECRET_ACCESS_KEY: $(MY_SECRET_KEY)
+  AWS_ACCESS_KEY_ID: $MY_AWS_ACCESS_KEY
+  AWS_SECRET_ACCESS_KEY: $MY_SECRET_KEY
   AWS_DEFAULT_REGION: "us-east-1"
 
 before_script:
