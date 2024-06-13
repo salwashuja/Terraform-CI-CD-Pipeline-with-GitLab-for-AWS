@@ -1,93 +1,175 @@
-# cicdtf
+**Project Name**
+Terraform CI/CD Pipeline with GitLab for AWS
+
+**Description**
+In this DevOps project, you will see how to set up a CI/CD pipeline using GitLab to automatically deploy infrastructure on AWS cloud using Terraform. The project will cover the end-to-end process of infrastructure as code (IaC) deployment, including validation, planning, application, and destruction of resources. This project have a robust and automated pipeline that ensures consistent and reliable infrastructure deployment.
+
+**Project Architecture**
+
+- > The project consists of a GitLab repository that contains Terraform configuration files.
+- > A GitLab CI/CD pipeline is configured to manage the deployment process.
+- > The pipeline stages include validation, planning, applying, and destroying infrastructure.
+- > The infrastructure is deployed on AWS, utilizing services such as EC2, S3, and VPC.
+- > The pipeline is triggered on code changes, ensuring continuous deployment.
 
 
 
-## Getting started
+**Technologies Used**
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+- Infrastructure as Code (IaC): Terraform
+- Version Control: GitLab
+- CI/CD: GitLab CI/CD
+- Cloud Provider: AWS
+- Containerization: Docker (for the GitLab AWS runner image)
+- CI/CD Pipeline
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
 
-## Add your files
+**Pipeline Configuration**
+The CI/CD pipeline is configured in the .gitlab-ci.yml file and consists of the following stages:
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/devops201119/cicdtf.git
-git branch -M main
-git push -uf origin main
+image:
+    name: registry.gitlab.com/gitlab-org/gitlab-build-images:terraform
+    entrypoint:
+        - '/usr/bin/env'
+        - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+variables:
+    
+  AWS_ACCESS_KEY_ID: $MY_AWS_ACCESS_KEY
+  AWS_SECRET_ACCESS_KEY: $MY_SECRET_KEY
+  AWS_DEFAULT_REGION: "us-east-1"
+
+before_script:
+    -  terraform --version
+    -  terraform init
+stages:
+    - validate
+    - plan
+    - apply 
+    - destroy
+
+validate:
+    stage: validate
+    script:
+        - terraform validate
+
+plan:
+    stage: plan
+    dependencies:
+        - validate
+    script: 
+        - terraform plan -out="planfile"
+    artifacts:
+        paths:
+          - planfile
+
+apply:
+    stage: apply
+    dependencies:
+        - plan
+    script:
+        - terraform apply -input=false planfile
+
+destroy:
+    stage: destroy
+    script: 
+        - terraform destroy --auto-approve
+
+    when: manual
+
 ```
 
-## Integrate with your tools
+**Stage Descriptions:**
 
-- [ ] [Set up project integrations](https://gitlab.com/devops201119/cicdtf/-/settings/integrations)
+Validate: Ensures that the Terraform configuration files are syntactically correct using terraform validate. 
 
-## Collaborate with your team
+Plan: Creates an execution plan with terraform plan -out=planfile, outlining the changes Terraform will make to the infrastructure. The artifact of the plan stage will be saved in the planfile  that will be used in the apply stage. Dependencies is used so that the plan job runs only if the validate job is successful
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+Apply: Applies the changes required to reach the desired state of the configuration with terraform apply "planfile".Dependencies parameter is used so that the apply job only runs once the plan job is successful. And it will be run manually.
 
-## Test and Deploy
+Destroy: Destroys the infrastructure managed by Terraform using terraform destroy -auto-approve. And it will be run manually.
 
-Use the built-in continuous integration in GitLab.
+**Repository Structure**
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+```
+cicdTF/
+│
+├── backend.tf                  # Configuration for S3 backend and state locking
+├── main.tf                     # Main configuration file calling the modules
+├── provider.tf                 # AWS provider initialization for us-east-1 region
+├── variables.tf                # Variables for the main configuration
+├── outputs.tf                  # Outputs for the main configuration
+│
+├── modules/
+│   ├── ec2/
+│   │   ├── main.tf             # EC2 resource configuration
+│   │   ├── variables.tf        # Input variables for EC2 module
+│   │   ├── outputs.tf          # Output variables for EC2 module
+│   │
+│   ├── vpc/
+│       ├── main.tf             # VPC, subnet, and security group configuration
+│       ├── variables.tf        # Input variables for VPC module
+│       ├── outputs.tf          # Output variables for VPC module
+│
+└── README.md                   # Documentation for the repository
+```
+**backend.tf:** Configures a shared S3 backend to store the Terraform state file and enables state locking with a DynamoDB table.
+**main.tf:** The main configuration file that calls the vpc and ec2 modules and passes necessary inputs and outputs between them.
+**provider.tf: **Initializes the AWS provider in the us-east-1 region.
+**variables.tf:** Defines the input variables for the main configuration.
+**outputs.tf:** Specifies the outputs for the main configuration.
+**Modules:**
 
-***
+**ec2/:**
+_main.tf:_ Contains the resource block for creating EC2 instances.
+_variables.tf:_ Defines input variables required by the EC2 module.
+_outputs.tf:_ Specifies the outputs of the EC2 module.
+**vpc/:**
+_main.tf:_ Contains the resource blocks for creating VPC, subnets, and security groups.
+_variables.tf:_ Defines input variables required by the VPC module.
+_outputs.tf:_ Specifies the outputs of the VPC module, such as subnet IDs and security group IDs, which are used as inputs for the EC2 module.
 
-# Editing this README
+**Prerequisites**:
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+- GitLab account
+- AWS account with appropriate permissions
+- Terraform installed locally for testing
 
-## Suggestions for a good README
+**Installation Steps:**
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+- Clone the repository to your local machine.
+- Configure AWS credentials in GitLab CI/CD variables.
+- Customize the Terraform configuration files in the main directory as needed.
 
-## Name
-Choose a self-explaining name for your project.
+**Configuration:**
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+Ensure the .gitlab-ci.yml file is configured correctly with your AWS credentials and desired Terraform actions.
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+**Deployment**:
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+**Pipeline Execution:**
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+- Push changes to the GitLab repository to trigger the CI/CD pipeline.
+- The pipeline will automatically run the validation, plan. The apply, and destroy stages will be required to run manually.
+- Monitor the pipeline progress in the GitLab CI/CD interface.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+**Manual Steps:**
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+- Review and approve the plan stage output if needed.
+- Apply additional configurations or manual steps as required by your specific use case.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+**Usage**:
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+**Deploy Infrastructure:**
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+- Make changes to the Terraform configuration files.
+- Commit and push the changes to the GitLab repository.
+- The CI/CD pipeline will automatically validate, plan, and the apply the changes manually.
 
-## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+**Destroy Infrastructure:**
+
+To destroy the infrastructure, trigger the destroy stage manually from the GitLab CI/CD interface or by pushing a commit that includes the necessary changes.
