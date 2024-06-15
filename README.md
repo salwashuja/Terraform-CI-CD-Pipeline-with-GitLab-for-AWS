@@ -115,10 +115,15 @@ cicdTF/
 └── README.md                   # Documentation for the repository
 ```
 **backend.tf:** Configures a shared S3 backend to store the Terraform state file and enables state locking with a DynamoDB table.
+
 **main.tf:** The main configuration file that calls the vpc and ec2 modules and passes necessary inputs and outputs between them.
-**provider.tf: **Initializes the AWS provider in the us-east-1 region.
+
+**provider.tf:** Initializes the AWS provider in the us-east-1 region.
+
 **variables.tf:** Defines the input variables for the main configuration.
+
 **outputs.tf:** Specifies the outputs for the main configuration.
+
 **Modules:**
 
 **ec2/:**
