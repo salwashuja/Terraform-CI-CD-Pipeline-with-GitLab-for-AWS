@@ -82,11 +82,11 @@ destroy:
 
 **Stage Descriptions:**
 
-Validate: Ensures that the Terraform configuration files are syntactically correct using terraform validate. 
+**Validate:** Ensures that the Terraform configuration files are syntactically correct using terraform validate. 
 
-Plan: Creates an execution plan with terraform plan -out=planfile, outlining the changes Terraform will make to the infrastructure. The artifact of the plan stage will be saved in the planfile  that will be used in the apply stage. Dependencies is used so that the plan job runs only if the validate job is successful
+**Plan:** Creates an execution plan with terraform plan -out=planfile, outlining the changes Terraform will make to the infrastructure. The artifact of the plan stage will be saved in the planfile  that will be used in the apply stage. Dependencies is used so that the plan job runs only if the validate job is successful
 
-Apply: Applies the changes required to reach the desired state of the configuration with terraform apply "planfile".Dependencies parameter is used so that the apply job only runs once the plan job is successful. And it will be run manually.
+**Apply:** Applies the changes required to reach the desired state of the configuration with terraform apply "planfile".Dependencies parameter is used so that the apply job only runs once the plan job is successful. And it will be run manually.
 
 Destroy: Destroys the infrastructure managed by Terraform using terraform destroy -auto-approve. And it will be run manually.
 
